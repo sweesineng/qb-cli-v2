@@ -16,12 +16,13 @@ const int Column_Width_Default = 9;
 const int Column_Width_Max = 15;
 const int Title = 1;
 const int Menu = 2;
-const int Right_offset = 1;
+const int Edge_Offset = 1;
 
 int Width, Height, N_Column, torrent_size, categories_size;
 int Name_Window_Width, Status_Window_Width, Status_Window_Start_X, Window_Height, Name_Window_Start_X = 0;
 int Max_Name_Length, Interval, Column_Width;
 int Name_Highlight = 0, Named_Selected = 0;
+int PrintList;
 
 WINDOW *Name_Window, *Status_Window, *Pop_Window;
 
