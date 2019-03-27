@@ -163,7 +163,7 @@ void parse_json(char *Data) {
 				info[j][0] = strdup(json_object_get_string(findobj(data2,"state")));
 				Flag.Downloading = (strcmp(info[j][0],"downloading") == 0 && Flag.Downloading == 0) ? 1 : Flag.Downloading;
 				Flag.Update = (HasChng(Flag.Downloading, Flag.Downloading_Ref) == 1 && Flag.Update == 0) ? 1 : 0;
-				Flag.Completed = (strcmp(info[j][0],"uploading") == 0 && Flag.Completed == 0) ? 1 : Flag.Completed;
+				Flag.Completed = (strcmp(info[j][0],"uploading") == 0 || strcmp(info[j][0],"pausedUP") == 0 && Flag.Completed == 0) ? 1 : Flag.Completed;
 				Flag.Update = (HasChng(Flag.Completed, Flag.Completed_Ref) == 1 && Flag.Update == 0) ? 1 : 0;
 				FileSize(&info[j][1], Column_Width_Default, json_object_get_int64(findobj(data2,"total_size")));
 				FileSize(&info[j][2], Column_Width_Default, json_object_get_int64(findobj(data2,"amount_left")));
