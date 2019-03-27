@@ -6,10 +6,11 @@ void GetScreen() {
    N_Column = (Flag.Downloading == 1 && Flag.Completed == 1) ? 4 : 3;
    Column_Width = ((Max_Name_Length + (Column_Width_Default * N_Column)) < Width) ? ((Width - Max_Name_Length) / N_Column) : Column_Width_Default;
    Column_Width = (Column_Width <= Column_Width_Max) ? Column_Width : Column_Width_Max;
-   Status_Window_Width = (Column_Width * N_Column) + Right_offset;
+   Status_Window_Width = (Column_Width * N_Column) + Edge_Offset;
    Status_Window_Start_X = Width - Status_Window_Width;
    Name_Window_Width = Width;
    Window_Height = Height - Title - Menu;
+   PrintList = (torrent_size > (Window_Height - 1)) ? (Window_Height - 1) : torrent_size; /* set default no of line to print */
 }
 
 /* print menu list */
@@ -124,7 +125,7 @@ void Print_Window_Header() {
          mvwprintw(Status_Window, 0, 0, "%-*s%*s%-*s%*s%-*s%*s%-*s", Column_Width, sta_t[0], 1, " ", Column_Width, sta_t[1], 1, " ", Column_Width, sta_t[2], 1, " ", Column_Width, sta_t[3]);
       }else if(Flag.Downloading == 0 && Flag.Completed == 1){
          /* print 3 column with completed */
-         mvwprintw(Status_Window, 0, 0, "%*s%*s%*s%*s", Column_Width, sta_t[1], Column_Width, sta_t[3], Column_Width, sta_t[4], Right_offset, " ");
+         mvwprintw(Status_Window, 0, 0, "%*s%*s%*s%*s", Column_Width, sta_t[1], Column_Width, sta_t[3], Column_Width, sta_t[4], Edge_Offset, " ");
       }else{
          /* print 3 column with download */
          mvwprintw(Status_Window, 0, 0, "%-*s%*s%-*s%*s%-*s", Column_Width, sta_t[0], 1, " ", Column_Width, sta_t[1], 1, " ", Column_Width, sta_t[2]);
@@ -133,22 +134,29 @@ void Print_Window_Header() {
 }
 
 /* print name window */
-void Print_Name_Window(int Selected) {
+void Print_Name_Window(int list_Size, int offset, int selected) {
    if(torrent_size != 0) {
-      for(int i = 0; i < torrent_size; ++i) {
-         if(Selected == i){
+      int Row_Offset = 0;
+      for(int i = 0; i < list_Size; ++i) {
+         if(PrintList < torrent_size) {
+            if(i == 0 && offset > 0) mvwaddstr(Name_Window, (i + 1), 0, "\xE2\x96\xB2\n");
+            if(i == (list_Size - 1) && (i + offset) < (torrent_size - 1)) mvwaddstr(Name_Window, (i + 1), 0, "\xE2\x96\xBC\n");
+            Row_Offset = 1;
+         }
+         if(i == (selected - offset)) {
             wattron(Name_Window, A_REVERSE);
-            if((Width - Status_Window_Width - 1) < strlen(name[i])) {
-               mvwprintw(Name_Window,(i + 1), 0, "%-.*s..", (Width - Status_Window_Width - 4), name[i]);
+            if((Width - Status_Window_Width - 1) < strlen(name[i + offset])) {
+               mvwprintw(Name_Window,(i + 1), Row_Offset, "%-.*s..", (Width - Status_Window_Width - 4), name[i + offset]);
             }else{
-               mvwprintw(Name_Window,(i + 1), 0, "%-s",name[i]);
+               mvwprintw(Name_Window,(i + 1), Row_Offset, "%-s",name[i + offset]);
             }
+            // mvprintw(i, 1,"%-s", name[i + offset]);
             wattroff(Name_Window,A_REVERSE);
          }else{
-            if((Width - Status_Window_Width - 1) < strlen(name[i])) {
-               mvwprintw(Name_Window, (i + 1), 0, "%-.*s..", (Width - Status_Window_Width - 4), name[i]);
+            if((Width - Status_Window_Width - 1) < strlen(name[i + offset])) {
+               mvwprintw(Name_Window, (i + 1), Row_Offset, "%-.*s..", (Width - Status_Window_Width - 4), name[i + offset]);
             }else{
-               mvwprintw(Name_Window, (i + 1), 0, "%-s", name[i]);
+               mvwprintw(Name_Window, (i + 1), Row_Offset, "%-s", name[i + offset]);
             }
          }
       }
@@ -156,19 +164,19 @@ void Print_Name_Window(int Selected) {
 }
 
 /* print status window */
-void Print_Stat_Window(int Selected) {
+void Print_Stat_Window(int list_Size, int offset, int Selected) {
    if(torrent_size != 0) {
       if(Flag.Selected == 0){
-         for(int i = 0; i < torrent_size; ++i) {
+         for(int i = 0; i < list_Size; ++i) {
             if(Flag.Downloading == 1 && Flag.Completed == 1) {
                /* print 4 column */
-               mvwprintw(Status_Window, (i + 1), 0, "%-*s%*s%-*s%*s%-*s%*s%-*s", Column_Width, status[i][0], 1, " ", Column_Width, status[i][1], 1, " ", Column_Width, status[i][2], 1, " ", Column_Width, status[i][3]);
+               mvwprintw(Status_Window, (i + 1), 0, "%-*s%*s%-*s%*s%-*s%*s%-*s", Column_Width, status[i + offset][0], 1, " ", Column_Width, status[i + offset][1], 1, " ", Column_Width, status[i + offset][2], 1, " ", Column_Width, status[i + offset][3]);
             }else if(Flag.Downloading == 0 && Flag.Completed == 1){
                /* print 3 column with completed */
-               mvwprintw(Status_Window, (i + 1), 0, "%*s%*s%*s%*s", Column_Width, status[i][1], Column_Width, status[i][3], Column_Width, info[i][3], Right_offset, " ");
+               mvwprintw(Status_Window, (i + 1), 0, "%*s%*s%*s%*s", Column_Width, status[i + offset][1], Column_Width, status[i + offset][3], Column_Width, info[i + offset][3], Edge_Offset, " ");
             }else{
                /* print 3 column with download */
-               mvwprintw(Status_Window, (i + 1), 0, "%-*s%*s%-*s%*s%-*s", Column_Width, status[i][0], 1, " ", Column_Width, status[i][1], 1, " ", Column_Width, status[i][2]);
+               mvwprintw(Status_Window, (i + 1), 0, "%-*s%*s%-*s%*s%-*s", Column_Width, status[i + offset][0], 1, " ", Column_Width, status[i + offset][1], 1, " ", Column_Width, status[i + offset][2]);
             }
          }
       }else{
