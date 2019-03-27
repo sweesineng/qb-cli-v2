@@ -1,7 +1,7 @@
 /* qbittorrent command line version */
 /* libcurl4-gnutls-dev libjson-c-dev libncurses5-dev libncursesw5-dev */
 /* gcc -L/usr/lib/x86_64-linux-gnu qb-cli-v2.c -o qb-cli-v2 -lcurl -ljson-c -lncursesw */
-/* valgrind --leak-check=full --track-origins=yes ./m */
+/* valgrind --leak-check=full --track-origins=yes ./qb-cli-v2 */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -100,10 +100,10 @@ int main() {
             Flag.Update = 1;
             break;
          case KEY_UP:
-            if( torrent_size != 0 && Flag.Selected == 0) { Name_Highlight = (Name_Highlight == 0) ? (torrent_size -1) : --Name_Highlight; }
+            if( torrent_size != 0 && Flag.Selected == 0) { Name_Highlight = (Name_Highlight == 0) ? 0 : --Name_Highlight; }
             break;
          case KEY_DOWN:
-            if( torrent_size != 0 && Flag.Selected == 0) { Name_Highlight = (Name_Highlight == (torrent_size - 1)) ? Name_Highlight = 0 : ++Name_Highlight; }
+            if( torrent_size != 0 && Flag.Selected == 0) { Name_Highlight = (Name_Highlight == (torrent_size - 1)) ? (torrent_size - 1) : ++Name_Highlight; }
             break;
          case KEY_LEFT:
             if(Flag.Category_Action == 1) { Flag.Category_Selected = (Flag.Category_Selected == 0) ? Flag.Category_Selected = categories_size : --Flag.Category_Selected; }
@@ -123,40 +123,46 @@ int main() {
          GetScreen();
          delwin(Name_Window);
          delwin(Status_Window);
+         delwin(Pop_Window);
+
+         wclear(stdscr); /* Clear Window */
 
          Name_Window = newwin(Window_Height, Name_Window_Width, Title, Name_Window_Start_X);
          wclear(Name_Window); /* Clear Window */
+
          if(Flag.Color == 0) { wbkgd(Name_Window, COLOR_PAIR(1)); }  /* Set background color */
 
          if(Flag.ECode == 0) {
             Status_Window = newwin(Window_Height, Status_Window_Width, Title, Status_Window_Start_X);
             if(Flag.Color == 0) { wbkgd(Status_Window, COLOR_PAIR(2)); }  /* Set background color */
-
+            wclear(Name_Window); /* Clear Window */
          }
+
          Flag.Update = 0; /* Reset flag */
          Flag.Init = 1; /* Flag after first initial run */
       }
-
-      wclear(stdscr); /* Clear Window */
-      wclear(Name_Window); /* Clear Window */
-      wclear(Status_Window); /* Clear Window */
 
       /* print program name with bold and underline */
       attron(A_BOLD | A_UNDERLINE);
       mvprintw(0, 0,"%-s",PName);
       attroff(A_BOLD | A_UNDERLINE);
       /* print time */
-      mvprintw(0, strlen(PName), "%*s", (Width - strlen(PName) - Right_offset), TimeBuf);
+      mvprintw(0, strlen(PName), "%*s", (Width - strlen(PName) - Edge_Offset), TimeBuf);
 
       /* Check data status */
       if(Flag.ECode != 0){
          mvwprintw(Name_Window, 1, 0, "%s", EState);
          Print_menu('q');
       }else{
+         /* Calculate upper, lower rng and offset */
+         int URANGE = (PrintList > torrent_size) ? (torrent_size - 1) : (PrintList - 1);
+         int LRANGE = (PrintList > torrent_size) ? URANGE - (torrent_size - 1) : URANGE - (PrintList - 1);
+         int OFFSET = (Name_Highlight >= URANGE) ? Name_Highlight - (PrintList - 1) : (Name_Highlight <= LRANGE) ? Name_Highlight : 0;
+
          Print_Window_Header();
          Print_menu('s');
-         Print_Name_Window(Name_Highlight);
-         Print_Stat_Window(Named_Selected);
+         Print_Name_Window(PrintList, OFFSET, Name_Highlight);
+         Print_Stat_Window(PrintList, OFFSET, Named_Selected);
       }
 
       wnoutrefresh(stdscr);
